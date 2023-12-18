@@ -19,10 +19,6 @@ from datetime import timedelta
 from scipy.io.wavfile import write
 
 load_dotenv()
-# audio = whisper.load_audio(audio_path)
-# audio = whisper.pad_or_trim(audio)
-# import tiktoken
-
 
 openai_api_key = os.environ['OPEN_API_KEY']
 model = 'gpt-3.5-turbo'
@@ -30,34 +26,35 @@ model = 'gpt-3.5-turbo'
 
 def get_timestamps(chunks_text):
     # Prompt to get title and summary for each chunk
-    prompt_template = """Extract key content and corresponding timestamps from the provided subtitle text. 
-                        Format the output in JSON, limited to a maximum of 5 clips. Ensure each clip's duration 
-                        (difference between start_time and end_time) is between 4 seconds and 1 minute. Adjust 
-                        the duration as needed to include crucial sentences, keeping it reasonable. Combine other 
-                        subtitle sections to form extended clips. 
-                        
-                        Present only the JSON in your response, without additional text:
-  
-                        {text}
+    prompt_template = """
+    Extract key content and corresponding timestamps from the provided subtitle text. 
+    Format the output in JSON, limited to a maximum of 5 clips. Ensure each clip's duration 
+    (difference between start_time and end_time) is between 4 seconds and 1 minute. Adjust 
+    the duration as needed to include crucial sentences, keeping it reasonable. Combine other 
+    subtitle sections to form extended clips. 
+    
+    Present only the JSON in your response, without additional text:
 
-                        Please return your answer in the following format:
-                        [
-                            {{
-                                "start_time": "00:00:00,000",
-                                "end_time": "00:00:05,060",
-                                "text": "The speaker recently bought a 3D printer."
-                            }},
-                            {{
-                                "start_time": "00:00:10,920",
-                                "end_time": "00:01:12,719",
-                                "text": "3D printers allow you to find pre-modeled designs online and print them easily."
-                            }},
-                            {{
-                                "start_time": "00:01:34,000",
-                                "end_time": "00:02:14,580",
-                                "text": "The speaker finds satisfaction in creating perfect fits for their belongings using "
-                            }}
-                        ]
+    {text}
+
+    Please return your answer in the following format:
+    [
+        {{
+            "start_time": "00:00:00,000",
+            "end_time": "00:00:05,060",
+            "text": "The speaker recently bought a 3D printer."
+        }},
+        {{
+            "start_time": "00:00:10,920",
+            "end_time": "00:01:12,719",
+            "text": "3D printers allow you to find pre-modeled designs online and print them easily."
+        }},
+        {{
+            "start_time": "00:01:34,000",
+            "end_time": "00:02:14,580",
+            "text": "The speaker finds satisfaction in creating perfect fits for their belongings using "
+        }}
+    ]
   """
     prompt = PromptTemplate(template=prompt_template, input_variables=["text"])
     # Define the LLMs
@@ -163,17 +160,6 @@ def get_clips(file, cuts):
         for i, clip in enumerate(filtered_cuts):
             start_time = timestamp_to_seconds(clip["start_time"])
             end_time = timestamp_to_seconds(clip["end_time"])
-
-            print(
-                "the clip starts from",
-                start_time,
-                "and ends at",
-                end_time,
-                "for",
-                clip["start_time"],
-                clip["end_time"],
-                i,
-            )
 
             if int(end_time - start_time) < 1:
                 continue
